@@ -8,9 +8,9 @@ import "C"
 
 import (
 	"fmt"
+	"github.com/lazywei/go-opencv/opencv"
 	"io/ioutil"
 	"unsafe"
-	"github.com/lazywei/go-opencv/opencv"
 )
 
 /* DecodeImageMemM decodes an image from an in memory byte buffer. */
@@ -24,29 +24,29 @@ func DecodeImageMemM(data []byte) *opencv.Mat {
 
 func LoadDetect() string {
 
-    buf, err :=  ioutil.ReadFile("/home/ec2-user/work/src/github.com/lazywei/go-opencv/images/lena.jpg")
-    if err != nil {
-        panic("error loading from file")
-    }
-    pmat := DecodeImageMemM(buf)
-    fmt.Println("pmat:", pmat)
+	buf, err := ioutil.ReadFile("/home/ec2-user/work/src/github.com/lazywei/go-opencv/images/lena.jpg")
+	if err != nil {
+		panic("error loading from file")
+	}
+	pmat := DecodeImageMemM(buf)
+	fmt.Println("pmat:", pmat)
 
-    detect := DetectInitialize("/home/ec2-user/c_apps/Simd/data/cascade/haar_face_0.xml")
+	detect := DetectInitialize("/home/ec2-user/c_apps/Simd/data/cascade/haar_face_0.xml")
 
-    return DetectObjects(pmat, detect)
+	return DetectObjects(pmat, detect)
 }
 
 func DetectInitialize(cascade string) unsafe.Pointer {
 
-    var detect unsafe.Pointer
-    detect = C.SimdDetectInitialize(C.CString(cascade))
+	var detect unsafe.Pointer
+	detect = C.SimdDetectInitialize(C.CString(cascade))
 
-    return detect
+	return detect
 }
 
 func DetectObjects(pmat *opencv.Mat, detect unsafe.Pointer) string {
 
-    return C.GoString(C.SimdDetectObjects(unsafe.Pointer(pmat), detect))
+	return C.GoString(C.SimdDetectObjects(unsafe.Pointer(pmat), detect))
 }
 
 func main() {
