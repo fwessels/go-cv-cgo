@@ -12,7 +12,11 @@ import "C"
 
 // ingroup bgr_conversion
 //SimdBgrToBayer(const uint8_t * bgr, size_t width, size_t height, size_t bgrStride, uint8_t * bayer, size_t bayerStride, SimdPixelFormatType bayerFormat)
-//SimdBgrToBgra(const uint8_t * bgr, size_t width, size_t height, size_t bgrStride, uint8_t * bgra, size_t bgraStride, uint8_t alpha)
+
+// SimdBgrToBgra(const uint8_t * bgr, size_t width, size_t height, size_t bgrStride, uint8_t * bgra, size_t bgraStride, uint8_t alpha)
+func BgrToBgra(bgr, bgra View) {
+	C.SimdBgrToBgra((*C.uint8_t)(bgr.data), C.size_t(bgr.width), C.size_t(bgr.height), C.size_t(bgr.stride), (*C.uint8_t)(bgra.data), C.size_t(bgra.stride), 0xff)
+}
 
 func BgrToGray(bgr, gray View) {
 
@@ -35,8 +39,17 @@ func BgrToHsv(bgr, hsv View) {
 
 // ingroup bgr_conversion
 //SimdBgraToBayer(const uint8_t * bgra, size_t width, size_t height, size_t bgraStride, uint8_t * bayer, size_t bayerStride, SimdPixelFormatType bayerFormat)
+
 //SimdBgraToBgr(const uint8_t * bgra, size_t width, size_t height, size_t bgraStride, uint8_t * bgr, size_t bgrStride)
+func BgraToBgr(bgra, bgr View) {
+	C.SimdBgraToBgr((*C.uint8_t)(bgra.data), C.size_t(bgra.width), C.size_t(bgra.height), C.size_t(bgra.stride), (*C.uint8_t)(bgr.data), C.size_t(bgr.stride))
+}
+
 //SimdBgraToGray(const uint8_t * bgra, size_t width, size_t height, size_t bgraStride, uint8_t * gray, size_t grayStride)
+func BgraToGray(bgra, gray View) {
+	C.SimdBgraToGray((*C.uint8_t)(bgra.data), C.size_t(bgra.width), C.size_t(bgra.height), C.size_t(bgra.stride), (*C.uint8_t)(gray.data), C.size_t(gray.stride))
+}
+
 //SimdBgraToYuv420p(const uint8_t * bgra, size_t width, size_t height, size_t bgraStride, uint8_t * y, size_t yStride, uint8_t * u, size_t uStride, uint8_t * v, size_t vStride)
 //SimdBgraToYuv422p(const uint8_t * bgra, size_t width, size_t height, size_t bgraStride, uint8_t * y, size_t yStride, uint8_t * u, size_t uStride, uint8_t * v, size_t vStride)
 //SimdBgraToYuv444p(const uint8_t * bgra, size_t width, size_t height, size_t bgraStride, uint8_t * y, size_t yStride, uint8_t * u, size_t uStride, uint8_t * v, size_t vStride)
@@ -47,6 +60,9 @@ func GrayToBgr(gray, bgr View) {
 }
 
 //SimdGrayToBgra(const uint8_t *gray, size_t width, size_t height, size_t grayStride, uint8_t *bgra, size_t bgraStride, uint8_t alpha)
+func GrayToBgra(gray, bgra View) {
+	C.SimdGrayToBgra((*C.uint8_t)(gray.data), C.size_t(gray.width), C.size_t(gray.height), C.size_t(gray.stride), (*C.uint8_t)(bgra.data), C.size_t(bgra.stride), 0xff)
+}
 
 // ingroup other_conversion
 //SimdBgr48pToBgra32(const uint8_t * blue, size_t blueStride, size_t width, size_t height, const uint8_t * green, size_t greenStride, const uint8_t * red, size_t redStride, uint8_t * bgra, size_t bgraStride, uint8_t alpha)

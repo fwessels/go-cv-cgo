@@ -1,6 +1,6 @@
 # Package Information for pkg-config
 
-prefix=/Users/frankw/c_apps/Simd
+prefix=/home/vadmeste/work/x/Simd-ermig
 includedir=${prefix}/src
 libdir=${prefix}/prj/cmake
 

@@ -8,9 +8,10 @@ import "C"
 
 import (
 	"fmt"
-	"github.com/lazywei/go-opencv/opencv"
 	"io/ioutil"
 	"unsafe"
+
+	"github.com/lazywei/go-opencv/opencv"
 )
 
 /* DecodeImageMemM decodes an image from an in memory byte buffer. */
@@ -29,7 +30,6 @@ func LoadDetect() string {
 		panic("error loading from file")
 	}
 	pmat := DecodeImageMemM(buf)
-	fmt.Println("pmat:", pmat)
 
 	detect := DetectInitialize("/home/ec2-user/c_apps/Simd/data/cascade/haar_face_0.xml")
 
@@ -39,14 +39,14 @@ func LoadDetect() string {
 func DetectInitialize(cascade string) unsafe.Pointer {
 
 	var detect unsafe.Pointer
-	detect = C.SimdDetectInitialize(C.CString(cascade))
+	// detect = C.SimdDetectInitialize(C.CString(cascade))
 
 	return detect
 }
 
 func DetectObjects(pmat *opencv.Mat, detect unsafe.Pointer) string {
 
-	return C.GoString(C.SimdDetectObjects(unsafe.Pointer(pmat), detect))
+	return "" // C.GoString(C.SimdDetectObjects(unsafe.Pointer(pmat), detect))
 }
 
 func main() {

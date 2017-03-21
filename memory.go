@@ -31,6 +31,11 @@ func Align(size, align int) int {
 	return int(C.SimdAlign(C.size_t(size), C.size_t(align)))
 }
 
+// FIXME - incorrect logic (should use C AlignoLo)
+func AlignLo(size, align int) int {
+	return Align(size, align)
+}
+
 // Alignment gets alignment required for the most productive work of the Simd Library.
 // a required alignment.
 func Alignment() int {

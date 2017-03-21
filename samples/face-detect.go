@@ -1,22 +1,45 @@
 package main
 
 import (
-	"fmt"
-	"github.com/fwessels/go-cv"
-	"io/ioutil"
+	"log"
+
+	gocv "github.com/fwessels/go-cv"
 )
 
 func main() {
 
-	buf, err := ioutil.ReadFile("./data/images/lena.jpg")
-	if err != nil {
-		panic("error loading from file")
+	objects := []gocv.Object{}
+
+	img := gocv.View{}
+
+	// Load image
+	if ok := img.Load("data/images/lena.pgm"); !ok {
+		log.Fatal("Cannot load image")
 	}
-	pmat := gocv.DecodeImageMemM(buf)
 
-	detect := gocv.DetectInitialize("./data/cascades/haar_face_0.xml")
+	// Initialize new detection engine
+	detect := gocv.NewDetection()
 
-	json := gocv.DetectObjects(pmat, detect)
+	// Load face detection xml
+	if ok := detect.Load("data/cascades/haar_face_0.xml"); !ok {
+		log.Fatal("face detection xml not loaded")
+	}
 
-	fmt.Println(json)
+	// Init
+	if ok := detect.Init(img.Size()); !ok {
+		log.Fatal("cannot init detect with image size")
+	}
+
+	// Detect
+	objects, ok := detect.Detect(img, objects)
+	if !ok {
+		log.Fatal("detection failed")
+	}
+
+	if len(objects) == 0 {
+		log.Fatal("no objects found")
+	}
+
+	// Print found face coordinates
+	log.Printf("%+v", objects[0].Rect)
 }
