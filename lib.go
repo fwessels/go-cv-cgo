@@ -1,7 +1,7 @@
 package gocv
 
 func Convert(src View, dst View) {
-	assert(src.Size().Equals(dst.Size()) && src.format != NONE && dst.format != NONE)
+	assert(SizeOpEquals(src.Size(), dst.Size()) && src.format != NONE && dst.format != NONE)
 
 	if src.format == dst.format {
 		Copy(src, dst)

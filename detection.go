@@ -6,6 +6,7 @@ package gocv
 // #cgo LDFLAGS: -lstdc++
 import "C"
 import (
+	"image"
 	"math"
 	"unsafe"
 )
@@ -95,8 +96,8 @@ func (d *Detection) Load(path string) bool {
 		data.handle = Handle(handle)
 		data.tag = UNDEFINED_OBJECT_TAG
 		DetectionInfo(handle,
-			(*C.size_t)(unsafe.Pointer(&data.size.x)),
-			(*C.size_t)(unsafe.Pointer(&data.size.y)),
+			(*C.size_t)(unsafe.Pointer(&data.size.X)),
+			(*C.size_t)(unsafe.Pointer(&data.size.Y)),
 			&data.flags)
 		d._data = append(d._data, data)
 
@@ -122,9 +123,9 @@ func (d *Detection) InitLevels(scaleFactor float64, sizeMin Size, sizeMax Size, 
 		exit := true
 		insert := false
 		for i := 0; i < len(d._data); i++ {
-			windowSize := d._data[i].size.Mul(scale)
-			if windowSize.x <= sizeMax.x && windowSize.y <= sizeMax.y && windowSize.x <= d._imageSize.x && windowSize.y <= d._imageSize.y {
-				if windowSize.x >= sizeMin.x && windowSize.y >= sizeMin.y {
+			windowSize := SizeOpMul(d._data[i].size, scale)
+			if windowSize.X <= sizeMax.X && windowSize.Y <= sizeMax.Y && windowSize.X <= d._imageSize.X && windowSize.Y <= d._imageSize.Y {
+				if windowSize.X >= sizeMin.X && windowSize.Y >= sizeMin.Y {
 					insert = true
 					inserts[i] = true
 				}
@@ -138,17 +139,17 @@ func (d *Detection) InitLevels(scaleFactor float64, sizeMin Size, sizeMax Size, 
 			level := Level{}
 			level.scale = scale
 			level.throughColumn = scale <= 2.0
-			scaledSize := d._imageSize.Div(scale)
+			scaledSize := SizeOpDiv(d._imageSize, scale)
 
-			level.src.Recreate(scaledSize.x, scaledSize.y, GRAY8)
-			level.roi.Recreate(scaledSize.x, scaledSize.y, GRAY8)
-			level.mask.Recreate(scaledSize.x, scaledSize.y, GRAY8)
+			level.src.Recreate(scaledSize.X, scaledSize.Y, GRAY8)
+			level.roi.Recreate(scaledSize.X, scaledSize.Y, GRAY8)
+			level.mask.Recreate(scaledSize.X, scaledSize.Y, GRAY8)
 
-			level.sum.Recreate(scaledSize.x+1, scaledSize.y+1, INT32)
-			level.sqsum.Recreate(scaledSize.x+1, scaledSize.y+1, INT32)
-			level.tilted.Recreate(scaledSize.x+1, scaledSize.y+1, INT32)
+			level.sum.Recreate(scaledSize.X+1, scaledSize.Y+1, INT32)
+			level.sqsum.Recreate(scaledSize.X+1, scaledSize.Y+1, INT32)
+			level.tilted.Recreate(scaledSize.X+1, scaledSize.Y+1, INT32)
 
-			level.dst.Recreate(scaledSize.x, scaledSize.y, GRAY8)
+			level.dst.Recreate(scaledSize.X, scaledSize.Y, GRAY8)
 
 			level.needSqsum = false
 			level.needTilted = false
@@ -210,21 +211,21 @@ func (d *Detection) InitLevels(scaleFactor float64, sizeMin Size, sizeMax Size, 
 	return !(len(d._levels) == 0)
 }
 
-func (d *Detection) FillMotionMask(rects []Rect, level Level, rect Rect) {
+func (d *Detection) FillMotionMask(rects []image.Rectangle, level Level, rect image.Rectangle) {
 	Fill(level.mask, 0)
 	for i := 0; i < len(rects); i++ {
-		r := rects[i].Div(level.scale)
-		rect.Assign(rect.Or(r))
+		r := RectOpDiv(rects[i], level.scale)
+		RectAssign(rect, RectOpOr(rect, r))
 		Fill(level.mask.RegionRect(r), 0xff)
 	}
-	rect.Assign(rect.And(level.rect))
+	RectAssign(rect, RectOpAnd(rect, level.rect))
 	OperationBinary8u(level.mask, level.roi, level.mask, SimdOperationBinary8uAnd)
 }
 
 func (d *Detection) FillLevels(src View) {
 	gray := View{}
 	if src.format != GRAY8 {
-		gray.Recreate(src.Size().x, src.Size().y, GRAY8)
+		gray.Recreate(src.Size().X, src.Size().Y, GRAY8)
 		Convert(src, gray)
 		src = gray
 	}
@@ -258,17 +259,17 @@ func addr2uint8(addr uintptr, index int) uint8 {
 	return *(*uint8)(unsafe.Pointer(newAddr))
 }
 
-func (d *Detection) AddObjects(objs []Object, dst View, rect Rect, size Size, scale float64, step int, tag Tag) []Object {
-	s := dst.Size().Minus(size)
-	r := rect.Shifted(size.Div(-2)).Intersection(Size2Rect(s))
-	for row := r.top; row < r.bottom; row += step {
+func (d *Detection) AddObjects(objs []Object, dst View, rect image.Rectangle, size Size, scale float64, step int, tag Tag) []Object {
+	s := SizeOpMinus(dst.Size(), size)
+	r := RectOpIntersect(RectOpShift(rect, SizeOpDiv(size, -2)), Size2Rect(s))
+	for row := r.Min.Y; row < r.Max.Y; row += step {
 		// mask := (*(*[]uint8)(dst.data))[row*dst.stride : r.right]
 		mask := uintptr(dst.data) + uintptr(row*dst.stride)
-		for col := r.left; col < r.right; col += step {
+		for col := r.Min.X; col < r.Max.X; col += step {
 			if addr2uint8(mask, col) != 0 {
 				objs = append(objs,
 					Object{
-						Rect:   Rect{left: col, top: row, right: col + size.x, bottom: row + size.y}.Mul(scale),
+						Rect:   RectOpMul(image.Rect(col, row, col+size.X, row+size.Y), scale),
 						weight: 1,
 						tag:    tag,
 					},
@@ -370,12 +371,12 @@ func (d *Detection) GroupObjects(dst []Object, src []Object, groupSizeMin int, s
 
 	for i := 0; i < len(labels); i++ {
 		cls := labels[i]
-		buffer[cls].Rect = buffer[cls].Rect.Add(src[i].Rect)
+		buffer[cls].Rect = RectOpAdd(buffer[cls].Rect, src[i].Rect)
 		buffer[cls].weight++
 		buffer[cls].tag = src[i].tag
 	}
 	for i := 0; i < len(buffer); i++ {
-		buffer[i].Rect = buffer[i].Rect.Div(float64(buffer[i].weight))
+		buffer[i].Rect = RectOpDiv(buffer[i].Rect, float64(buffer[i].weight))
 	}
 	for i := 0; i < len(buffer); i++ {
 		r1 := buffer[i].Rect
@@ -392,10 +393,14 @@ func (d *Detection) GroupObjects(dst []Object, src []Object, groupSizeMin int, s
 
 			r2 := buffer[j].Rect
 
-			dx := Round(float64(r2.Width()) * sizeDifferenceMax)
-			dy := Round(float64(r2.Height()) * sizeDifferenceMax)
+			dx := Round(float64(r2.Dx()) * sizeDifferenceMax)
+			dy := Round(float64(r2.Dy()) * sizeDifferenceMax)
 
-			if i != j && (n2 > max(3, n1) || n1 < 3) && r1.left >= r2.left-dx && r1.top >= r2.top-dy && r1.right <= r2.right+dx && r1.bottom <= r2.bottom+dy {
+			if i != j && (n2 > max(3, n1) || n1 < 3) &&
+				r1.Min.X >= r2.Min.X-dx &&
+				r1.Min.Y >= r2.Min.Y-dy &&
+				r1.Max.X <= r2.Max.X+dx &&
+				r1.Max.Y <= r2.Max.Y+dy {
 				break
 			}
 		}
@@ -411,9 +416,9 @@ func (d *Detection) Detect(src View, objects []Object) ([]Object, bool) {
 	groupSizeMin := 3
 	sizeDifferenceMax := 0.2
 	motionMask := false
-	motionsRegions := []Rect{}
+	motionsRegions := []image.Rectangle{}
 
-	if len(d._levels) == 0 || !src.Size().Equals(d._imageSize) {
+	if len(d._levels) == 0 || !SizeOpEquals(src.Size(), d._imageSize) {
 		return nil, false
 	}
 

@@ -1,7 +1,9 @@
 package gocv
 
+import "image"
+
 type Object struct {
-	Rect   Rect
+	Rect   image.Rectangle
 	weight int
 	tag    Tag
 }

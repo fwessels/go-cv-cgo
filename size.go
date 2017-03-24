@@ -1,23 +1,25 @@
 package gocv
 
-type Size Point
+import "image"
 
-func (s Size) Div(scale float64) Size {
+type Size image.Point
+
+func SizeOpEquals(s1 Size, s2 Size) bool {
+	return s1.X == s2.X && s1.Y == s2.Y
+}
+
+func SizeOpDiv(s Size, scale float64) Size {
 	//FIXME: check if round is used in C++
-	return Size{x: Round(float64(s.x) / scale), y: Round(float64(s.y) / scale)}
+	return Size{X: Round(float64(s.X) / scale), Y: Round(float64(s.Y) / scale)}
 }
 
-func (s Size) Mul(scale float64) Size {
-	return Size{x: Round(float64(s.x) * scale), y: Round(float64(s.y) * scale)}
+func SizeOpMul(s Size, scale float64) Size {
+	return Size{X: Round(float64(s.X) * scale), Y: Round(float64(s.Y) * scale)}
 }
 
-func (s Size) Minus(size Size) Size {
+func SizeOpMinus(s1 Size, s2 Size) Size {
 	return Size{
-		x: s.x - size.x,
-		y: s.y - size.y,
+		X: s1.X - s2.X,
+		Y: s1.Y - s2.Y,
 	}
-}
-
-func (s Size) Equals(size Size) bool {
-	return s.x == size.x && s.y == size.y
 }

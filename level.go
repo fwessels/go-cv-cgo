@@ -1,5 +1,7 @@
 package gocv
 
+import "image"
+
 type Level struct {
 	hids  []Hid
 	scale float64
@@ -8,7 +10,7 @@ type Level struct {
 	roi  View
 	mask View
 
-	rect Rect
+	rect image.Rectangle
 
 	sum    View
 	sqsum  View

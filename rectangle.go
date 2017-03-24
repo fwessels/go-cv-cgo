@@ -1,139 +1,100 @@
 package gocv
 
-type Rect struct {
-	left   int
-	top    int
-	right  int
-	bottom int
-}
+import "image"
 
-func (r Rect) Height() int {
-	// FIXME: weird, this should not be negative
-	return r.bottom - r.top
-}
-
-func (r Rect) Width() int {
-	// FIXME: weird, this should not be negative
-	return r.right - r.left
-}
-
-func (r Rect) Area() int {
-	return r.Width() * r.Height()
-}
-
-func (r Rect) Empty() bool {
-	return r.Area() == 0
-}
-
-func (r Rect) Div(s float64) Rect {
+func RectOpDiv(r image.Rectangle, s float64) image.Rectangle {
 	//FIXME: is Round really used
-	return Rect{
-		left:   Round(float64(r.left) / s),
-		top:    Round(float64(r.top) / s),
-		right:  Round(float64(r.right) / s),
-		bottom: Round(float64(r.bottom) / s),
-	}
+	return image.Rect(
+		Round(float64(r.Min.X)/s),
+		Round(float64(r.Min.Y)/s),
+		Round(float64(r.Max.X)/s),
+		Round(float64(r.Max.Y)/s),
+	)
 }
 
-func (r Rect) Mul(s float64) Rect {
+func RectOpMul(r image.Rectangle, s float64) image.Rectangle {
 	//FIXME: is Round really used
-	return Rect{
-		left:   Round(float64(r.left) * s),
-		top:    Round(float64(r.top) * s),
-		right:  Round(float64(r.right) * s),
-		bottom: Round(float64(r.bottom) * s),
-	}
+	return image.Rect(
+		Round(float64(r.Min.X)*s),
+		Round(float64(r.Min.Y)*s),
+		Round(float64(r.Max.X)*s),
+		Round(float64(r.Max.Y)*s),
+	)
 }
 
-func (r Rect) Add(rect Rect) Rect {
+func RectOpAdd(r1 image.Rectangle, r2 image.Rectangle) image.Rectangle {
 	// FIXME: Use Convert()
-	return Rect{
-		left:   r.left + rect.left,
-		top:    r.top + rect.top,
-		right:  r.right + rect.right,
-		bottom: r.bottom + rect.bottom,
-	}
+	return image.Rect(
+		r1.Min.X+r2.Min.X,
+		r1.Min.Y+r2.Min.Y,
+		r1.Max.X+r2.Max.X,
+		r1.Max.Y+r2.Max.Y,
+	)
 }
 
-func (r Rect) Copy() Rect {
-	return Rect{
-		left:   r.left,
-		top:    r.top,
-		right:  r.right,
-		bottom: r.bottom,
-	}
+func RectCopy(r image.Rectangle) image.Rectangle {
+	return image.Rect(r.Min.X, r.Min.Y, r.Max.X, r.Max.Y)
 }
 
-func (r *Rect) Assign(rect Rect) {
-	r.left = rect.left
-	r.top = rect.top
-	r.right = rect.right
-	r.bottom = r.bottom
+func RectAssign(r1 image.Rectangle, r2 image.Rectangle) {
+	r1.Min.X = r2.Min.X
+	r1.Min.Y = r2.Min.Y
+	r1.Max.X = r2.Max.X
+	r1.Max.Y = r2.Max.Y
 }
 
 // FIXME: test needed
-func (r Rect) Or(rect Rect) Rect {
-	if r.Empty() {
-		return r.Copy()
+func RectOpOr(r1 image.Rectangle, r2 image.Rectangle) image.Rectangle {
+	if r1.Empty() {
+		return RectCopy(r1)
 	}
-	if rect.Empty() {
-		return rect.Copy()
+	if r2.Empty() {
+		return RectCopy(r2)
 	}
-	_r := rect.Copy()
-	new := Rect{}
-	new.left = min(r.left, _r.left)
-	new.top = min(r.top, _r.top)
-	new.right = max(r.right, _r.right)
-	new.bottom = max(r.bottom, _r.bottom)
-	return new
+	return image.Rect(
+		min(r1.Min.X, r2.Min.X),
+		min(r1.Min.Y, r2.Min.Y),
+		max(r1.Max.X, r2.Max.X),
+		max(r1.Max.Y, r2.Max.Y),
+	)
 }
 
-func (r Rect) And(rect Rect) Rect {
-	if r.Empty() {
-		return r.Copy()
+func RectOpAnd(r1 image.Rectangle, r2 image.Rectangle) image.Rectangle {
+	if r1.Empty() {
+		return RectCopy(r1)
 	}
-	if rect.Empty() {
-		return rect.Copy()
+	if r2.Empty() {
+		return RectCopy(r2)
 	}
-	new := Rect{}
-	_r := rect.Copy()
-	if r.left < _r.left {
-		new.left = min(_r.left, r.right)
+
+	var left, top, right, bottom int
+
+	if r1.Min.X < r2.Min.X {
+		left = min(r2.Min.X, r1.Max.X)
 	}
-	if r.top < _r.top {
-		new.top = min(_r.top, r.bottom)
+	if r1.Min.Y < r2.Min.Y {
+		top = min(r2.Min.Y, r1.Max.Y)
 	}
-	if r.right > _r.right {
-		new.right = max(_r.right, r.left)
+	if r1.Max.X > r2.Max.X {
+		right = max(r2.Max.X, r1.Min.X)
 	}
-	if r.bottom > _r.bottom {
-		new.bottom = max(_r.bottom, r.top)
+	if r1.Max.Y > r2.Max.Y {
+		bottom = max(r2.Max.Y, r1.Min.Y)
 	}
-	return new
+	return image.Rect(left, top, right, bottom)
 }
 
-func (r Rect) Intersection(rect Rect) Rect {
-	left := max(r.left, rect.left)
-	top := max(r.top, rect.top)
-	right := max(left, min(r.right, rect.right))
-	bottom := max(top, min(r.bottom, rect.bottom))
-	return Rect{left: left, top: top, right: right, bottom: bottom}
+func RectOpIntersect(r1 image.Rectangle, r2 image.Rectangle) image.Rectangle {
+	return r1.Intersect(r2)
 }
 
-func (r Rect) Shifted(shift Size) Rect {
-	return Rect{
-		left:   r.left + shift.x,
-		top:    r.top + shift.y,
-		right:  r.right + shift.x,
-		bottom: r.bottom + shift.y,
-	}
+func RectOpShift(r1 image.Rectangle, shift Size) image.Rectangle {
+	return r1.Add(image.Point(shift))
 }
 
-func Size2Rect(s Size) Rect {
-	return Rect{
-		left:   0,
-		top:    0,
-		right:  s.x,
-		bottom: s.y,
+func Size2Rect(s Size) image.Rectangle {
+	return image.Rectangle{
+		Min: image.Point{0, 0},
+		Max: image.Point{s.X, s.Y},
 	}
 }

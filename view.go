@@ -136,7 +136,7 @@ type View struct {
 }
 
 func (v *View) Size() Size {
-	return Size{x: v.width, y: v.height}
+	return Size{X: v.width, Y: v.height}
 }
 
 func (v *View) ChannelCount() int {
@@ -146,35 +146,35 @@ func (v *View) ChannelCount() int {
 func (v View) RegionPos(size Size, position Position) View {
 	switch position {
 	case TopLeft:
-		return v.RegionRect(Rect{0, 0, size.x, size.y})
+		return v.RegionRect(image.Rect(0, 0, size.X, size.Y))
 	case TopCenter:
-		return v.RegionRect(Rect{(v.width - size.x) / 2, 0, (v.width + size.x) / 2, size.y})
+		return v.RegionRect(image.Rect((v.width-size.X)/2, 0, (v.width+size.X)/2, size.Y))
 	case TopRight:
-		return v.RegionRect(Rect{v.width - size.x, 0, v.width, size.y})
+		return v.RegionRect(image.Rect(v.width-size.X, 0, v.width, size.Y))
 	case MiddleLeft:
-		return v.RegionRect(Rect{0, (v.height - size.y) / 2, size.x, (v.height + size.y) / 2})
+		return v.RegionRect(image.Rect(0, (v.height-size.Y)/2, size.X, (v.height+size.Y)/2))
 	case MiddleCenter:
-		return v.RegionRect(Rect{(v.width - size.x) / 2, (v.height - size.y) / 2, (v.width + size.x) / 2, (v.height + size.y) / 2})
+		return v.RegionRect(image.Rect((v.width-size.X)/2, (v.height-size.Y)/2, (v.width+size.X)/2, (v.height+size.Y)/2))
 	case MiddleRight:
-		return v.RegionRect(Rect{v.width - size.x, (v.height - size.y) / 2, v.width, (v.height + size.y) / 2})
+		return v.RegionRect(image.Rect(v.width-size.X, (v.height-size.Y)/2, v.width, (v.height+size.Y)/2))
 	case BottomLeft:
-		return v.RegionRect(Rect{0, v.height - size.y, size.x, v.height})
+		return v.RegionRect(image.Rect(0, v.height-size.Y, size.X, v.height))
 	case BottomCenter:
-		return v.RegionRect(Rect{(v.width - size.x) / 2, v.height - size.y, (v.width + size.x) / 2, v.height})
+		return v.RegionRect(image.Rect((v.width-size.X)/2, v.height-size.Y, (v.width+size.X)/2, v.height))
 	case BottomRight:
-		return v.RegionRect(Rect{v.width - size.x, v.height - size.y, v.width, v.height})
+		return v.RegionRect(image.Rect(v.width-size.X, v.height-size.Y, v.width, v.height))
 	default:
 		assert(false)
 	}
 	return View{}
 }
 
-func (v View) RegionRect(rect Rect) View {
-	if v.data != nil && rect.right >= rect.left && rect.bottom >= rect.top {
-		left := min(max(rect.left, 0), v.width)
-		top := min(max(rect.top, 0), v.height)
-		right := min(max(rect.right, 0), v.width)
-		bottom := min(max(rect.bottom, 0), v.height)
+func (v View) RegionRect(rect image.Rectangle) View {
+	if v.data != nil && rect.Max.X >= rect.Min.X && rect.Max.Y >= rect.Min.Y {
+		left := min(max(rect.Min.X, 0), v.width)
+		top := min(max(rect.Min.Y, 0), v.height)
+		right := min(max(rect.Max.X, 0), v.width)
+		bottom := min(max(rect.Max.Y, 0), v.height)
 
 		return View{
 			width:  right - left,
