@@ -6,8 +6,10 @@ package gocv
 // #cgo LDFLAGS: -lstdc++
 import "C"
 import (
+	"errors"
 	"fmt"
 	"image"
+	"image/color"
 	"image/draw"
 	"io/ioutil"
 	"os"
@@ -205,8 +207,32 @@ func (v *View) Recreate(w, h int, f Format) {
 	v.data = Allocate(v.height*v.stride, Alignment())
 }
 
-// Load
-func (v *View) Load(path string) bool {
+func (v *View) LoadImage(img image.Image, format Format) error {
+
+	w := img.Bounds().Dx()
+	h := img.Bounds().Dy()
+
+	switch format {
+	case GRAY8:
+		v.Recreate(w, h, GRAY8)
+
+		data := make([]byte, w*h) // GRAY8, one byte for each pixel
+
+		for x := 0; x < w; x++ {
+			for y := 0; y < h; y++ {
+				c, _, _, _ := color.GrayModel.Convert(img.At(y, x)).RGBA()
+				data[x*w+y] = byte(c)
+			}
+		}
+		v.data = C.CBytes(data)
+		return nil
+	default:
+		return errors.New("format argument unsupported")
+	}
+}
+
+// LoadPGM
+func (v *View) LoadPGM(path string) bool {
 
 	file, err := os.Open(path)
 	if err != nil {

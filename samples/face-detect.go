@@ -1,7 +1,11 @@
 package main
 
 import (
+	"image"
 	"log"
+	"os"
+
+	_ "image/jpeg"
 
 	gocv "github.com/fwessels/go-cv"
 )
@@ -9,12 +13,24 @@ import (
 func main() {
 
 	objects := []gocv.Object{}
+	view := gocv.View{}
 
-	img := gocv.View{}
+	// Load jpeg image
+	file, err := os.Open("data/images/lena.jpg")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
 
-	// Load image
-	if ok := img.Load("data/images/lena.pgm"); !ok {
-		log.Fatal("Cannot load image")
+	// Decode file using go's image API
+	img, _, err := image.Decode(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// go-cv loads image
+	if err := view.LoadImage(img, gocv.GRAY8); err != nil {
+		log.Fatal("Cannot load image, ", err)
 	}
 
 	// Initialize new detection engine
@@ -26,12 +42,12 @@ func main() {
 	}
 
 	// Init
-	if ok := detect.Init(img.Size()); !ok {
+	if ok := detect.Init(view.Size()); !ok {
 		log.Fatal("cannot init detect with image size")
 	}
 
-	// Detect
-	objects, ok := detect.Detect(img, objects)
+	// Detect faces
+	objects, ok := detect.Detect(view, objects)
 	if !ok {
 		log.Fatal("detection failed")
 	}
@@ -42,4 +58,5 @@ func main() {
 
 	// Print found face coordinates
 	log.Printf("%+v", objects[0].Rect)
+
 }
