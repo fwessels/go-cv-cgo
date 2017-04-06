@@ -145,6 +145,16 @@ func (v *View) ChannelCount() int {
 	return ChannelCount(v.format)
 }
 
+func (v *View) PixGet(x, y int) uint8 {
+	val := (*uint8)(unsafe.Pointer(uintptr(v.data) + uintptr(y*v.stride) + uintptr(x*PixelSize(v.format))))
+	return *val
+}
+
+func (v *View) PixSet(x, y int, val uint8) {
+	p := (*uint8)(unsafe.Pointer(uintptr(v.data) + uintptr(y*v.stride) + uintptr(x*PixelSize(v.format))))
+	*p = val
+}
+
 func (v View) RegionPos(size Size, position Position) View {
 	switch position {
 	case TopLeft:
@@ -362,6 +372,9 @@ func OcvTo(cvtype int) Format {
 	return NONE
 }
 
+func ViewCompatible(a, b View) bool {
+	return a.width == b.width && a.height == b.height && a.format == b.format
+}
 func MatToView(mat *opencv.Mat) View {
 	matData := mat.GetData()
 	return View{
