@@ -235,8 +235,8 @@ func (v *View) LoadImage(img image.Image, format Format) error {
 
 		for x := 0; x < w; x++ {
 			for y := 0; y < h; y++ {
-				c, _, _, _ := color.GrayModel.Convert(img.At(y, x)).RGBA()
-				data[x*w+y] = byte(c)
+				c, _, _, _ := color.GrayModel.Convert(img.At(x, y)).RGBA()
+				data[x+y*w] = byte(c)
 			}
 		}
 		v.data = C.CBytes(data)

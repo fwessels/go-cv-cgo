@@ -1,7 +1,9 @@
 package main
 
 import (
+	"image"
 	"log"
+	"os"
 
 	_ "image/jpeg"
 
@@ -13,9 +15,22 @@ func main() {
 	contours := []gocv.Contour{}
 	view := gocv.View{}
 
+	// Load jpeg image
+	file, err := os.Open("data/images/lena.jpg")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	// Decode file using go's image API
+	img, _, err := image.Decode(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// go-cv loads image
-	if ok := view.LoadPGM("data/images/lena.pgm"); !ok {
-		log.Fatal("Cannot load image")
+	if err := view.LoadImage(img, gocv.GRAY8); err != nil {
+		log.Fatal("Cannot load image, ", err)
 	}
 
 	// Initialize new contouer detection
