@@ -37,7 +37,11 @@ func main() {
 		log.Printf("contours found = %d\n", len(contours))
 	}
 
-	// Print found face coordinates
-	log.Printf("%+v", contours[0])
+	for i := 0; i < len(contours); i++ {
+		for j := 1; j < len(contours[i].P); j++ {
+			gocv.DrawLine(view, contours[i].P[j-1], contours[i].P[j], 255, 1)
+		}
+	}
 
+	view.Save("/tmp/result.pgm")
 }

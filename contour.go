@@ -34,18 +34,18 @@ func ContourAnchors(src View, step int, threshold int16, dst View) {
 		(*C.uint8_t)(dst.data), C.size_t(dst.stride))
 }
 
-type Direction uint16
+type Direction int16
 
 const (
-	Unknown Direction = iota
-	Left
-	Right
+	Unknown Direction = iota - 1
 	Up
 	Down
+	Right
+	Left
 )
 
 type Contour struct {
-	p []image.Point
+	P []image.Point
 }
 
 type ContourDetector struct {
@@ -114,9 +114,9 @@ func (c *ContourDetector) PerformSmartRouting(contours []Contour, minSegmentLeng
 		anchor := c._anchors[i]
 		if anchor.val > 0 {
 			contour := Contour{}
-			contour.p = make([]image.Point, 200)
-			c.SmartRoute(contours, contour, anchor.p.X, anchor.p.Y, minSegmentLength, gradientThreshold, Unknown)
-			if len(contour.p) > minSegmentLength {
+			contour.P = make([]image.Point, 0, 200)
+			contours, contour = c.SmartRoute(contours, contour, anchor.p.X, anchor.p.Y, minSegmentLength, gradientThreshold, Unknown)
+			if len(contour.P) > minSegmentLength {
 				contours = append(contours, contour)
 			}
 		}
@@ -125,21 +125,20 @@ func (c *ContourDetector) PerformSmartRouting(contours []Contour, minSegmentLeng
 	return contours
 }
 
-func (c *ContourDetector) SmartRoute(contours []Contour, contour Contour, x, y, minSegmentLength int, gradientThreshold uint16, direction Direction) []Contour {
+func (c *ContourDetector) SmartRoute(contours []Contour, contour Contour, x, y, minSegmentLength int, gradientThreshold uint16, direction Direction) ([]Contour, Contour) {
 	switch direction {
 	case Unknown:
-		break
 	case Left:
 		for c.CheckMetricsForMagnitudeAndDirection(x, y, gradientThreshold, 1) {
 			if c._e.PixGet(x, y) == 0 {
 				c._e.PixSet(x, y, 255)
-				if len(contour.p) != 0 && abs(contour.p[len(contour.p)-1].X-x) > 1 || abs(contour.p[len(contour.p)-1].Y-y) > 1 {
-					if len(contour.p) > minSegmentLength {
+				if len(contour.P) != 0 && (abs(contour.P[len(contour.P)-1].X-x) > 1 || abs(contour.P[len(contour.P)-1].Y-y) > 1) {
+					if len(contour.P) > minSegmentLength {
 						contours = append(contours, contour)
 					}
-					contour.p = []image.Point{}
+					contour.P = []image.Point{}
 				}
-				contour.p = append(contour.p, image.Point{X: x, Y: y})
+				contour.P = append(contour.P, image.Point{X: x, Y: y})
 			}
 			if c.CheckMetricsForMagnitudeMaximum(x-1, y-1, x-1, y, x-1, y+1) {
 				x--
@@ -158,13 +157,13 @@ func (c *ContourDetector) SmartRoute(contours []Contour, contour Contour, x, y, 
 		for c.CheckMetricsForMagnitudeAndDirection(x, y, gradientThreshold, 1) {
 			if c._e.PixGet(x, y) == 0 {
 				c._e.PixSet(x, y, 255)
-				if len(contour.p) != 0 && abs(contour.p[len(contour.p)-1].X-x) > 1 || abs(contour.p[len(contour.p)-1].Y-1) > 1 {
-					if len(contour.p) > minSegmentLength {
+				if len(contour.P) != 0 && (abs(contour.P[len(contour.P)-1].X-x) > 1 || abs(contour.P[len(contour.P)-1].Y-y) > 1) {
+					if len(contour.P) > minSegmentLength {
 						contours = append(contours, contour)
 					}
-					contour.p = []image.Point{}
+					contour.P = []image.Point{}
 				}
-				contour.p = append(contour.p, image.Point{X: x, Y: y})
+				contour.P = append(contour.P, image.Point{X: x, Y: y})
 			}
 			if c.CheckMetricsForMagnitudeMaximum(x+1, y-1, x+1, y, x+1, y+1) {
 				x++
@@ -183,13 +182,13 @@ func (c *ContourDetector) SmartRoute(contours []Contour, contour Contour, x, y, 
 		for c.CheckMetricsForMagnitudeAndDirection(x, y, gradientThreshold, 0) {
 			if c._e.PixGet(x, y) == 0 {
 				c._e.PixSet(x, y, 255)
-				if len(contour.p) != 0 && abs(contour.p[len(contour.p)-1].X-x) > 1 || abs(contour.p[len(contour.p)-1].Y-y) > 1 {
-					if len(contour.p) > minSegmentLength {
+				if len(contour.P) != 0 && (abs(contour.P[len(contour.P)-1].X-x) > 1 || abs(contour.P[len(contour.P)-1].Y-y) > 1) {
+					if len(contour.P) > minSegmentLength {
 						contours = append(contours, contour)
 					}
-					contour.p = []image.Point{}
+					contour.P = []image.Point{}
 				}
-				contour.p = append(contour.p, image.Point{X: x, Y: y})
+				contour.P = append(contour.P, image.Point{X: x, Y: y})
 			}
 			if c.CheckMetricsForMagnitudeMaximum(x-1, y-1, x, y-1, x+1, y-1) {
 				x--
@@ -208,13 +207,13 @@ func (c *ContourDetector) SmartRoute(contours []Contour, contour Contour, x, y, 
 		for c.CheckMetricsForMagnitudeAndDirection(x, y, gradientThreshold, 0) {
 			if c._e.PixGet(x, y) == 0 {
 				c._e.PixSet(x, y, 255)
-				if len(contour.p) != 0 && abs(contour.p[len(contour.p)-1].X-x) > 1 || abs(contour.p[len(contour.p)-1].Y-y) > 1 {
-					if len(contour.p) > minSegmentLength {
+				if len(contour.P) != 0 && (abs(contour.P[len(contour.P)-1].X-x) > 1 || abs(contour.P[len(contour.P)-1].Y-y) > 1) {
+					if len(contour.P) > minSegmentLength {
 						contours = append(contours, contour)
 					}
-					contour.p = []image.Point{}
+					contour.P = []image.Point{}
 				}
-				contour.p = append(contour.p, image.Point{X: x, Y: y})
+				contour.P = append(contour.P, image.Point{X: x, Y: y})
 			}
 			if c.CheckMetricsForMagnitudeMaximum(x+1, y+1, x, y+1, x-1, y+1) {
 				x++
@@ -231,31 +230,31 @@ func (c *ContourDetector) SmartRoute(contours []Contour, contour Contour, x, y, 
 		}
 	}
 
-	if c._e.PixGet(x, y) != 0 || uint16(c._m.PixGet(x, y)) < gradientThreshold {
-		return contours
+	if c._e.PixGet(x, y) != 0 || c._m.PixGet16(x, y) < gradientThreshold {
+		return contours, contour
 	}
 
-	d := uint16(c._m.PixGet(x, y) & 1)
+	d := c._m.PixGet16(x, y) & 1
 	if d == 0 {
-		contours = c.SmartRoute(contours, contour, x, y, minSegmentLength, gradientThreshold, Up)
-		contours = c.SmartRoute(contours, contour, x, y, minSegmentLength, gradientThreshold, Down)
+		contours, contour = c.SmartRoute(contours, contour, x, y, minSegmentLength, gradientThreshold, Up)
+		contours, contour = c.SmartRoute(contours, contour, x, y, minSegmentLength, gradientThreshold, Down)
 	} else if d == 1 {
-		contours = c.SmartRoute(contours, contour, x, y, minSegmentLength, gradientThreshold, Right)
-		contours = c.SmartRoute(contours, contour, x, y, minSegmentLength, gradientThreshold, Left)
+		contours, contour = c.SmartRoute(contours, contour, x, y, minSegmentLength, gradientThreshold, Right)
+		contours, contour = c.SmartRoute(contours, contour, x, y, minSegmentLength, gradientThreshold, Left)
 	}
 
-	return contours
+	return contours, contour
 }
 
 func (c *ContourDetector) CheckMetricsForMagnitudeAndDirection(x, y int, gradientThreshold, direction uint16) bool {
-	m := uint16(c._m.PixGet(x, y))
+	m := c._m.PixGet16(x, y)
 	return m >= gradientThreshold && (m&1) == direction
 }
 
 func (c *ContourDetector) CheckMetricsForMagnitudeMaximum(x0, y0, x1, y1, x2, y2 int) bool {
-	m0 := uint16(c._m.PixGet(x0, y0) | 1)
-	m1 := uint16(c._m.PixGet(x1, y1) | 1)
-	m2 := uint16(c._m.PixGet(x2, y2) | 1)
+	m0 := c._m.PixGet16(x0, y0) | 1
+	m1 := c._m.PixGet16(x1, y1) | 1
+	m2 := c._m.PixGet16(x2, y2) | 1
 	return m0 > m1 && m0 > m2
 }
 
@@ -265,7 +264,7 @@ func (c *ContourDetector) ContourAnchors(anchorThreshold, anchorScanInterval int
 	for row := c._roi.Min.Y + 1; row < c._roi.Max.Y-1; row += anchorScanInterval {
 		for col := c._roi.Min.X; col < c._roi.Max.X-1; col += anchorScanInterval {
 			if c._a.PixGet(col, row) != 0 {
-				c._anchors = append(c._anchors, Anchor{p: image.Point{X: col, Y: row}, val: uint16(c._m.PixGet(col, row) / 2)})
+				c._anchors = append(c._anchors, Anchor{p: image.Point{X: col, Y: row}, val: c._m.PixGet16(col, row) / 2})
 			}
 		}
 	}
@@ -287,7 +286,7 @@ func (c *ContourDetector) EstimateAdaptiveThreshold() uint16 {
 
 	for i := 0; i < size.X; i++ {
 		for j := 0; j < size.Y; j++ {
-			value = uint16(m.PixGet(i, j))
+			value = m.PixGet16(i, j)
 			if value != 0 {
 				count++
 				value = value >> 1

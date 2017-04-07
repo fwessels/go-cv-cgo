@@ -150,6 +150,11 @@ func (v *View) PixGet(x, y int) uint8 {
 	return *val
 }
 
+func (v *View) PixGet16(x, y int) uint16 {
+	val := (*uint16)(unsafe.Pointer(uintptr(v.data) + uintptr(y*v.stride) + uintptr(x*PixelSize(v.format))))
+	return *val
+}
+
 func (v *View) PixSet(x, y int, val uint8) {
 	p := (*uint8)(unsafe.Pointer(uintptr(v.data) + uintptr(y*v.stride) + uintptr(x*PixelSize(v.format))))
 	*p = val

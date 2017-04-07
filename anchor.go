@@ -7,13 +7,16 @@ type Anchor struct {
 	val uint16
 }
 
-/* func AnchorOpCompare(a, b Anchor) bool {
-	return a.val > b.val
-} */
-
-// AxisSorter sorts planets by axis.
 type Anchors []Anchor
 
-func (a Anchors) Len() int           { return len(a) }
-func (a Anchors) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a Anchors) Less(i, j int) bool { return a[i].val < a[j].val }
+func (a Anchors) Len() int      { return len(a) }
+func (a Anchors) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a Anchors) Less(i, j int) bool {
+	if a[i].val != a[j].val {
+		return a[i].val > a[j].val
+	}
+	if a[i].p.X != a[j].p.X {
+		return a[i].p.X > a[j].p.X
+	}
+	return a[i].p.Y > a[j].p.Y
+}
