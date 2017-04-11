@@ -119,3 +119,10 @@ func DrawLine(canvas View, p1 image.Point, p2 image.Point, color uint8, width in
 		}
 	}
 }
+
+func DrawRectangle(canvas View, rect image.Rectangle, color uint8, width int) {
+	DrawLine(canvas, image.Point{X: rect.Min.X, Y: rect.Min.Y}, image.Point{X: rect.Max.X, Y: rect.Min.Y}, color, width)
+	DrawLine(canvas, image.Point{X: rect.Max.X, Y: rect.Min.Y}, image.Point{X: rect.Max.X, Y: rect.Max.Y}, color, width)
+	DrawLine(canvas, image.Point{X: rect.Max.X, Y: rect.Max.Y}, image.Point{X: rect.Min.X, Y: rect.Max.Y}, color, width)
+	DrawLine(canvas, image.Point{X: rect.Min.X, Y: rect.Max.Y}, image.Point{X: rect.Min.X, Y: rect.Min.Y}, color, width)
+}
