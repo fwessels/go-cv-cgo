@@ -21,6 +21,7 @@ Show a performance comparison to OpenCV 2.4 for various techniques.
 ### AVX2
 
 ```
+                            OpenCV        go-cv
 benchmark                   old ns/op     new ns/op     delta
 BenchmarkGaussian-4         3734353       566876        -84.82%
 BenchmarkGaussianRGB-4      11377449      2491829       -78.10%
